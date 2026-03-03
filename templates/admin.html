@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Admin Dashboard - GITAM Assistant</title>
+
+    <style>
+        body {
+            font-family: "Segoe UI", Arial, sans-serif;
+            background: #f4f6f9;
+            margin: 0;
+            padding: 40px;
+        }
+
+        h1 {
+            margin-bottom: 20px;
+        }
+
+        .card {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0px 2px 10px rgba(0,0,0,0.08);
+            margin-bottom: 25px;
+        }
+
+        .stats {
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .stat-box {
+            flex: 1;
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 28px;
+            font-weight: bold;
+            color: #4f46e5;
+        }
+
+        .file-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid #eee;
+        }
+
+        button {
+            padding: 8px 12px;
+            border-radius: 6px;
+            border: none;
+            cursor: pointer;
+        }
+
+        .delete-btn {
+            background: #ef4444;
+            color: white;
+        }
+
+        .upload-btn {
+            background: #10a37f;
+            color: white;
+        }
+
+        .rebuild-btn {
+            background: #4f46e5;
+            color: white;
+            width: 100%;
+            margin-top: 10px;
+        }
+
+        .success {
+            padding: 10px;
+            background: #d1fae5;
+            color: #065f46;
+            border-radius: 6px;
+            margin-bottom: 15px;
+        }
+
+        input[type="file"] {
+            margin-top: 10px;
+        }
+
+    </style>
+</head>
+<body>
+
+<h1>📊 Admin Dashboard</h1>
+
+{% if message %}
+<div class="success">
+    {{ message }}
+</div>
+{% endif %}
+
+<!-- Stats -->
+<div class="card stats">
+    <div class="stat-box">
+        <div>Total PDFs</div>
+        <div class="stat-number">{{ pdf_count }}</div>
+    </div>
+    <div class="stat-box">
+        <div>Total Pages</div>
+        <div class="stat-number">{{ total_pages }}</div>
+    </div>
+</div>
+
+<!-- Uploaded PDFs -->
+<div class="card">
+    <h2>📂 Uploaded PDFs</h2>
+
+    {% if files %}
+        {% for file in files %}
+            <div class="file-item">
+                <span>{{ file }}</span>
+                <a href="/delete/{{ file }}"
+                   onclick="return confirm('Are you sure you want to delete this PDF?');">
+                    <button class="delete-btn">Delete</button>
+                </a>
+            </div>
+        {% endfor %}
+    {% else %}
+        <p>No PDFs uploaded yet.</p>
+    {% endif %}
+</div>
+
+<!-- Upload Section -->
+<div class="card">
+    <h2>📤 Upload New PDF</h2>
+
+    <form action="/upload" method="post" enctype="multipart/form-data">
+        <input type="file" name="file" required>
+        <br><br>
+        <button class="upload-btn" type="submit">Upload</button>
+    </form>
+</div>
+
+<!-- Rebuild -->
+<div class="card">
+    <h2>🔄 Rebuild Vector Database</h2>
+
+    <a href="/rebuild"
+       onclick="return confirm('Rebuild vector database now?');">
+        <button class="rebuild-btn">Rebuild</button>
+    </a>
+</div>
+
+</body>
+</html>

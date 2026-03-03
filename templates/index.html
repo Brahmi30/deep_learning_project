@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>GITAM GYAN</title>
+
+<style>
+body{
+    margin:0;
+    font-family:"Segoe UI", Arial;
+    background:#0f0f0f;
+    color:white;
+    overflow:hidden;
+}
+
+/* ================= HOME PAGE ================= */
+#homePage{
+    position:fixed;
+    width:100%;
+    height:100%;
+    background:linear-gradient(135deg,#0f0f0f,#1a001f);
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    align-items:center;
+    text-align:center;
+    z-index:10;
+}
+
+#homeTitle{
+    font-size:60px;
+    font-weight:bold;
+    background:linear-gradient(90deg,#9b5cff,#c084fc,#9b5cff);
+    -webkit-background-clip:text;
+    -webkit-text-fill-color:transparent;
+    animation:glow 2s infinite alternate;
+}
+
+@keyframes glow{
+    from{text-shadow:0 0 10px #9b5cff;}
+    to{text-shadow:0 0 35px #c084fc;}
+}
+
+.cursor{
+    display:inline-block;
+    width:3px;
+    background:#c084fc;
+    margin-left:5px;
+    animation:blink 1s infinite;
+}
+
+@keyframes blink{
+    0%{opacity:1;}
+    50%{opacity:0;}
+    100%{opacity:1;}
+}
+
+#homeSubtitle{
+    margin-top:20px;
+    font-size:18px;
+    color:#ccc;
+    opacity:0;
+    transition:opacity 1s ease;
+}
+
+#startBtn{
+    margin-top:40px;
+    padding:12px 30px;
+    font-size:16px;
+    background:#9b5cff;
+    border:none;
+    border-radius:8px;
+    cursor:pointer;
+    color:white;
+    transition:0.3s;
+    opacity:0;
+}
+
+#startBtn:hover{
+    background:#7c3aed;
+    transform:scale(1.05);
+}
+
+/* HOME EXIT */
+.home-exit{
+    animation:homeExit 0.8s ease forwards;
+}
+
+@keyframes homeExit{
+    0%{opacity:1; transform:scale(1);}
+    100%{opacity:0; transform:scale(0.95) translateY(-40px);}
+}
+
+/* PARTICLES */
+.particle{
+    position:absolute;
+    width:4px;
+    height:4px;
+    background:#9b5cff;
+    border-radius:50%;
+    opacity:0.6;
+    animation:float 8s linear infinite;
+}
+
+@keyframes float{
+    from{transform:translateY(100vh);}
+    to{transform:translateY(-10vh);}
+}
+
+/* ================= CHAT ================= */
+#app{
+    display:flex;
+    height:100vh;
+    opacity:0;
+    transform:translateY(40px);
+}
+
+.chat-enter{
+    animation:chatEnter 0.8s ease forwards;
+}
+
+@keyframes chatEnter{
+    0%{opacity:0; transform:translateY(40px);}
+    100%{opacity:1; transform:translateY(0);}
+}
+
+/* Sidebar */
+#sidebar{
+    width:260px;
+    background:#1a001f;
+    padding:15px;
+    display:flex;
+    flex-direction:column;
+}
+
+#newChat{
+    padding:10px;
+    background:#2a0033;
+    border:none;
+    color:#c084fc;
+    cursor:pointer;
+    margin-bottom:15px;
+    border-radius:6px;
+}
+
+.chat-item{
+    padding:10px;
+    margin-bottom:5px;
+    cursor:pointer;
+    border-radius:6px;
+    color:#ccc;
+}
+
+.chat-item:hover{
+    background:#2a0033;
+}
+
+.active-chat{
+    background:#2a0033;
+    color:#c084fc;
+    font-weight:bold;
+}
+
+/* Main Chat */
+#main{
+    flex:1;
+    display:flex;
+    flex-direction:column;
+}
+
+#chatbox{
+    flex:1;
+    padding:20px;
+    overflow-y:auto;
+    display:flex;
+    flex-direction:column;
+}
+
+.message{
+    margin-bottom:15px;
+    max-width:70%;
+    padding:12px;
+    border-radius:12px;
+    animation:popIn 0.3s ease;
+}
+
+@keyframes popIn{
+    from{transform:scale(0.9); opacity:0;}
+    to{transform:scale(1); opacity:1;}
+}
+
+.user{
+    background:#7c3aed;
+    color:white;
+    align-self:flex-end;
+}
+
+.bot{
+    background:#1f1f1f;
+    color:#c084fc;
+    align-self:flex-start;
+}
+
+.timestamp{
+    font-size:11px;
+    opacity:0.5;
+    margin-top:5px;
+}
+
+/* Typing Dots */
+.typingDots span{
+    animation:blink 1.4s infinite both;
+}
+
+.typingDots span:nth-child(2){animation-delay:0.2s;}
+.typingDots span:nth-child(3){animation-delay:0.4s;}
+
+#inputArea{
+    display:flex;
+    padding:15px;
+    background:#1a001f;
+    border-top:1px solid #2a0033;
+}
+
+#messageInput{
+    flex:1;
+    padding:10px;
+    font-size:16px;
+    border-radius:6px;
+    border:1px solid #2a0033;
+    background:#0f0f0f;
+    color:white;
+}
+
+#sendBtn{
+    padding:10px 15px;
+    margin-left:10px;
+    cursor:pointer;
+    border-radius:6px;
+    border:none;
+    background:#9b5cff;
+    color:white;
+}
+
+#sendBtn:hover{
+    background:#7c3aed;
+}
+</style>
+</head>
+
+<body>
+
+<div id="homePage">
+    <div id="homeTitle">
+        <span id="typedText"></span><span class="cursor"></span>
+    </div>
+    <div id="homeSubtitle">Your Intelligent Academic Assistant for GITAM University</div>
+    <button id="startBtn">Start Exploring</button>
+</div>
+
+<div id="app">
+    <div id="sidebar">
+        <button id="newChat">+ New Chat</button>
+        <div id="chatList"></div>
+    </div>
+    <div id="main">
+        <div id="chatbox"></div>
+        <div id="inputArea">
+            <input type="text" id="messageInput" placeholder="Ask something about GITAM...">
+            <button id="sendBtn">Send</button>
+        </div>
+    </div>
+</div>
+
+<script>
+
+/* TYPEWRITER */
+const text="GITAM GYAN";
+let i=0;
+function typeWriter(){
+    if(i<text.length){
+        document.getElementById("typedText").innerHTML+=text.charAt(i);
+        i++;
+        setTimeout(typeWriter,120);
+    }else{
+        document.getElementById("homeSubtitle").style.opacity=1;
+        document.getElementById("startBtn").style.opacity=1;
+    }
+}
+window.onload=typeWriter;
+
+/* TRANSITION */
+document.getElementById("startBtn").onclick=function(){
+    const home=document.getElementById("homePage");
+    const app=document.getElementById("app");
+    home.classList.add("home-exit");
+    setTimeout(()=>{
+        home.style.display="none";
+        app.classList.add("chat-enter");
+    },800);
+};
+
+/* PARTICLES */
+for(let p=0;p<40;p++){
+    let particle=document.createElement("div");
+    particle.className="particle";
+    particle.style.left=Math.random()*100+"vw";
+    particle.style.animationDuration=(5+Math.random()*5)+"s";
+    document.body.appendChild(particle);
+}
+
+/* CHAT LOGIC (same as yours) */
+let chats={},currentChatId=null;
+function getTime(){return new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});}
+function createNewChat(){
+    const id="chat_"+Date.now();
+    chats[id]={name:"New Chat",messages:[]};
+    currentChatId=id;
+    renderChatList();renderMessages();
+    addBotMessage("Hey there 👋 How can I assist you today?");
+}
+document.getElementById("newChat").onclick=createNewChat;
+function renderChatList(){
+    const list=document.getElementById("chatList");list.innerHTML="";
+    for(let id in chats){
+        const div=document.createElement("div");
+        div.className="chat-item";
+        if(id===currentChatId) div.classList.add("active-chat");
+        div.innerText=chats[id].name;
+        div.onclick=()=>{currentChatId=id;renderChatList();renderMessages();};
+        list.appendChild(div);
+    }
+}
+function renderMessages(){
+    const box=document.getElementById("chatbox");box.innerHTML="";
+    if(!currentChatId) return;
+    chats[currentChatId].messages.forEach(msg=>{
+        const div=document.createElement("div");
+        div.className="message "+msg.sender;
+        div.innerHTML=msg.text+`<div class="timestamp">${msg.time}</div>`;
+        box.appendChild(div);
+    });
+    box.scrollTop=box.scrollHeight;
+}
+function addUserMessage(t){chats[currentChatId].messages.push({sender:"user",text:t,time:getTime()});renderMessages();}
+function addBotMessage(t){chats[currentChatId].messages.push({sender:"bot",text:t,time:getTime()});renderMessages();}
+async function sendMessage(){
+    const input=document.getElementById("messageInput");
+    const message=input.value.trim(); if(!message) return;
+    if(!currentChatId) createNewChat();
+    addUserMessage(message); input.value="";
+    const typing=document.createElement("div");
+    typing.className="message bot typingDots";
+    typing.innerHTML="<span>.</span><span>.</span><span>.</span>";
+    document.getElementById("chatbox").appendChild(typing);
+    try{
+        const res=await fetch("http://127.0.0.1:8000/chat",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({text:message})});
+        typing.remove();
+        const data=await res.json();
+        addBotMessage(data.reply||"Information not found.");
+    }catch{
+        typing.remove();
+        addBotMessage("Server error.");
+    }
+}
+document.getElementById("sendBtn").onclick=sendMessage;
+document.getElementById("messageInput").addEventListener("keypress",e=>{if(e.key==="Enter") sendMessage();});
+createNewChat();
+
+</script>
+</body>
+</html>
