@@ -15,6 +15,9 @@ import os
 # APP INIT
 # =============================
 app = FastAPI()
+@app.get("/")
+def home():
+    return {"message": "API is running"}
 templates = Jinja2Templates(directory="templates")
 
 # =============================
