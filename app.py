@@ -6,7 +6,6 @@ from pydantic import BaseModel
 from langchain_community.vectorstores import FAISS
 from langchain_community.embeddings import HuggingFaceEmbeddings
 from langchain_groq import ChatGroq
-from langchain_community.document_loaders import DirectoryLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from rank_bm25 import BM25Okapi
 import shutil
@@ -16,7 +15,7 @@ import os
 # APP INIT
 # =============================
 app = FastAPI()
-templates = Jinja2Templates(directory="main/templates")
+templates = Jinja2Templates(directory="templates")
 
 # =============================
 # CORS
@@ -123,14 +122,10 @@ def detect_course(user_query):
 # =============================
 from pypdf import PdfReader
 
-# =============================
-# ADMIN PANEL
-# =============================
 @app.get("/admin", response_class=HTMLResponse)
 def admin_panel(request: Request, msg: str = None):
 
     files = os.listdir("uploads") if os.path.exists("uploads") else []
-
     total_pages = 0
 
     for file in files:
@@ -151,6 +146,7 @@ def admin_panel(request: Request, msg: str = None):
             "total_pages": total_pages
         }
     )
+
 # =============================
 # UPLOAD PDF
 # =============================
@@ -187,9 +183,6 @@ def delete_pdf(filename: str):
 # =============================
 # REBUILD VECTOR DATABASE
 # =============================
-# =============================
-# REBUILD VECTOR DATABASE
-# =============================
 @app.get("/rebuild")
 def rebuild():
 
@@ -205,7 +198,6 @@ def rebuild():
 
     documents = []
 
-    # Load ONLY PDFs safely
     for file in os.listdir("uploads"):
         if file.endswith(".pdf"):
             file_path = os.path.join("uploads", file)
@@ -239,6 +231,7 @@ def rebuild():
         url="/admin?msg=Vector DB rebuilt successfully",
         status_code=303
     )
+
 # =============================
 # CHAT ENDPOINT
 # =============================
@@ -251,13 +244,8 @@ def chat(q: Question):
         user_query = normalize_query(q.text)
         detected_course = detect_course(user_query)
 
-        print("User Query:", user_query)
-        print("Detected Course:", detected_course)
-
-        # Semantic search
         semantic_docs = db.similarity_search(user_query, k=5)
 
-        # BM25 search
         keyword_docs = []
         if bm25:
             tokenized_query = user_query.split()
@@ -265,38 +253,14 @@ def chat(q: Question):
             top_indices = sorted(range(len(scores)), key=lambda i: scores[i], reverse=True)[:5]
             keyword_docs = [documents_list[i] for i in top_indices]
 
-        # Combine
         combined_docs = list({
             doc.page_content: doc for doc in (semantic_docs + keyword_docs)
         }.values())
 
-        # Course filtering
-        if detected_course:
-            keywords = detected_course.split()
-            filtered_docs = []
-            for doc in combined_docs:
-                content = doc.page_content.lower()
-                if any(word in content for word in keywords):
-                    filtered_docs.append(doc)
-            if filtered_docs:
-                combined_docs = filtered_docs
-
         if not combined_docs:
             return {"reply": "Information not found.\n"}
 
-        # Build context + capture sources
-        context_parts = []
-        sources = set()
-
-        for doc in combined_docs:
-            context_parts.append(doc.page_content)
-            if hasattr(doc, "metadata"):
-                source_file = doc.metadata.get("source")
-                page_number = doc.metadata.get("page")
-                if source_file and page_number is not None:
-                    filename = os.path.basename(source_file)
-                    sources.add(f"{filename} – Page {page_number + 1}")
-
+        context_parts = [doc.page_content for doc in combined_docs]
         context = " ".join(context_parts)
 
         prompt = f"""
@@ -322,15 +286,17 @@ Answer:
         response = llm.invoke(prompt)
         answer = response.content.strip()
 
-        if not answer:
-            return {"reply": "Information not found.\n"}
-
-        if sources:
-            citation_text = "\n\n📌 Source:\n" + "\n".join(sorted(sources))
-            answer += citation_text
-
         return {"reply": answer}
 
     except Exception as e:
         print("CHAT ERROR:", str(e))
         return {"reply": "Backend error occurred."}
+
+# =============================
+# RUN SERVER (RENDER COMPATIBLE)
+# =============================
+import uvicorn
+
+if __name__ == "__main__":
+    port = int(os.environ.get("PORT", 10000))
+    uvicorn.run("app:app", host="0.0.0.0", port=port)
