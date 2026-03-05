@@ -10,14 +10,17 @@ from langchain_text_splitters import RecursiveCharacterTextSplitter
 from rank_bm25 import BM25Okapi
 import shutil
 import os
+import uvicorn
 
 # =============================
 # APP INIT
 # =============================
 app = FastAPI()
+
 @app.get("/")
 def home():
     return {"message": "API is running"}
+
 templates = Jinja2Templates(directory="templates")
 
 # =============================
@@ -32,11 +35,18 @@ app.add_middleware(
 )
 
 # =============================
-# EMBEDDINGS
+# EMBEDDINGS (LAZY LOAD)
 # =============================
-embeddings = HuggingFaceEmbeddings(
-    model_name="sentence-transformers/all-MiniLM-L6-v2"
-)
+embeddings = None
+
+def get_embeddings():
+    global embeddings
+    if embeddings is None:
+        print("Loading embedding model...")
+        embeddings = HuggingFaceEmbeddings(
+            model_name="sentence-transformers/all-MiniLM-L6-v2"
+        )
+    return embeddings
 
 # =============================
 # LOAD VECTOR DATABASE
@@ -46,7 +56,7 @@ def load_db():
         print("Loading existing vector DB...")
         return FAISS.load_local(
             "college_index",
-            embeddings,
+            get_embeddings(),
             allow_dangerous_deserialization=True
         )
     print("Vector DB not found.")
@@ -223,7 +233,7 @@ def rebuild():
 
     docs = splitter.split_documents(documents)
 
-    db = FAISS.from_documents(docs, embeddings)
+    db = FAISS.from_documents(docs, get_embeddings())
     db.save_local("college_index")
 
     build_bm25()
@@ -245,7 +255,6 @@ def chat(q: Question):
             return {"reply": "Vector database not built yet."}
 
         user_query = normalize_query(q.text)
-        detected_course = detect_course(user_query)
 
         semantic_docs = db.similarity_search(user_query, k=5)
 
@@ -261,7 +270,7 @@ def chat(q: Question):
         }.values())
 
         if not combined_docs:
-            return {"reply": "Information not found.\n"}
+            return {"reply": "Information not found."}
 
         context_parts = [doc.page_content for doc in combined_docs]
         context = " ".join(context_parts)
@@ -296,10 +305,8 @@ Answer:
         return {"reply": "Backend error occurred."}
 
 # =============================
-# RUN SERVER (RENDER COMPATIBLE)
+# RUN SERVER
 # =============================
-import uvicorn
-
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 10000))
     uvicorn.run("app:app", host="0.0.0.0", port=port)
