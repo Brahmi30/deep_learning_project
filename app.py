@@ -2,6 +2,7 @@ from fastapi import FastAPI, Request, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 from langchain_community.vectorstores import FAISS
 from langchain_community.embeddings import HuggingFaceEmbeddings
@@ -17,11 +18,20 @@ import uvicorn
 # =============================
 app = FastAPI()
 
-@app.get("/")
-def home():
-    return {"message": "API is running"}
-
+# =============================
+# TEMPLATES & STATIC
+# =============================
 templates = Jinja2Templates(directory="templates")
+
+if not os.path.exists("uploads"):
+    os.makedirs("uploads")
+
+# =============================
+# HOME PAGE (FRONTEND)
+# =============================
+@app.get("/", response_class=HTMLResponse)
+def home(request: Request):
+    return templates.TemplateResponse("index.html", {"request": request})
 
 # =============================
 # CORS
@@ -112,25 +122,6 @@ def normalize_query(query: str):
     return query
 
 # =============================
-# COURSE DETECTION
-# =============================
-def detect_course(user_query):
-    course_keywords = [
-        "operating systems",
-        "database management systems",
-        "computer networks",
-        "data structures",
-        "software engineering",
-        "artificial intelligence",
-        "machine learning"
-    ]
-
-    for course in course_keywords:
-        if course in user_query:
-            return course
-    return None
-
-# =============================
 # ADMIN PANEL
 # =============================
 from pypdf import PdfReader
@@ -166,7 +157,6 @@ def admin_panel(request: Request, msg: str = None):
 @app.post("/upload")
 def upload_pdf(file: UploadFile = File(...)):
 
-    os.makedirs("uploads", exist_ok=True)
     file_path = os.path.join("uploads", file.filename)
 
     with open(file_path, "wb") as buffer:
@@ -272,8 +262,7 @@ def chat(q: Question):
         if not combined_docs:
             return {"reply": "Information not found."}
 
-        context_parts = [doc.page_content for doc in combined_docs]
-        context = " ".join(context_parts)
+        context = " ".join(doc.page_content for doc in combined_docs)
 
         prompt = f"""
 You are an official AI academic assistant for GITAM University.
@@ -290,7 +279,12 @@ Question:
 Answer:
 """
 
+        groq_key = os.getenv("GROQ_API_KEY")
+        if not groq_key:
+            return {"reply": "Server missing GROQ API key."}
+
         llm = ChatGroq(
+            api_key=groq_key,
             model="llama-3.1-8b-instant",
             temperature=0.2
         )
